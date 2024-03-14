@@ -8,13 +8,33 @@ Para um fluxo com inversão de dependencia, a dependencia para de ser a implemen
 Ou seja toda implementação é uma dependencia, o design de codigo do fluxo que vai indicar se ela é uma dependencia exclusiva e obrigatoria do fluxo ou uma dependencia dinamica que pode ser injetada no fluxo.
 De um jeito ou de outro implementações são dependencia e ponto final.
 
-Um sistema que possui um nucleo sem dependencias é um modelo de desenvolvimento onde seu design possui apenas: estruturas de dados, interfaces e fluxos desenvolvidos através do principio de inversão de dependencia, ou seja, que recebem como parametro um adapter com uma implementação de forma que elas recebem uma dependencia mas que não possuem uma dependencia interna.
+Um sistema que possui um nucleo sem dependencias é um modelo de desenvolvimento onde seu design possui apenas: estruturas de dados, interfaces e fluxos, estes fluxos desenvolvidos com o principio de inversão de dependencia, não possuem uma dependencia interna, ao invés disso recebem como entrada instancias de interfaces e estas sim possuem dependencias.
 
 Na infraestrutura por outro lado recebemos apenas e unicamente dependencias, ou seja dentro da infrastructura colocamos, migrations, databases, configurações de chamadas de APIs externas, configurações de filas e principalmente acima de tudo: adaptadores de interfaces.
 
-Services -> Interfaces
-Models -> Estruturas de dados
-Fluxos -> Usecases
-Adaptadores -> Adapters
-Groups -> Controllers
-Routes -> Pontos de entrada dentro dos entrypoits http
+Em um fluxo seus processos internos podem ser categorizados baseados em seu comportamento:
+
+- Provider: 
+	Processo que controla dependencias para realizar seu comportamento
+
+- Factory: 
+	Processo que tem como objetivo gerar um provider ou uma model
+
+- Repository: 
+	Processo de injeção de parametros em outros processos de forma dinamica, onde cada instancia de um mesmo repository injeta parametros diferentes para lidar com processos no qual não apenas os types de seus parametros são dependencias, mas a informação contida desses parametros também. 
+
+	-- Exemplo: Instancias de processos providers de bancos de dados não devem receber apenas uma String como parametro para executar uma query e sim uma String com codigo SQL.
+
+	-- PS: Os repositories recebem como parametro uma instancia de interface.
+
+- Bridges: 
+	Processo que possui fluxo de HashMap interno para retorno de instancia de interfaces e dataclasses
+	
+	-- Exemplo: Ferramentas de injeção de dependencia costuma funcionar através de bridges
+
+Interfaces -> Serviços (Services)
+instancias de interfaces -> adaptadores (Adapters)
+Dataclasses ou estruturas de dados -> Modelos (Models)
+Fluxos -> Casos de uso (Usecases)
+Grupos de fluxos -> Controladores (Controllers)
+Pontos de entrada http -> Rotas (Routes)
