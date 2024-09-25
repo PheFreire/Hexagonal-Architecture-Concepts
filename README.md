@@ -1,40 +1,56 @@
-Arquitetura Hexagonal: A arquitetura hexagonal é uma arquitetura orientada a núcleo ou seja é uma arquitetura onde toda a regra de negocio: fluxos, estruturas de dados criadas (dataclasses) e assinaturas são isoladas dentro de um núcleo que não possui dependencias.
+# Arquitetura Hexagonal 
 
-Mas, oque são dependencias?
-Dependencia é toda relação obrigatoria indispensavel entre dois processos no qual um deles não consegue realizar sua funcionalidade sem a existecia do outro.
+## Termos importantes
+- Interfaces ->  Abstração que define a assinatura de um metodo ou estrutura de dados
+- Services -> "Interface" que define a assinatura de um metodo
+- Dataclasses | DTOs | Models -> "Interface" que define a assinatura de uma estrutura de dados
+- Adapters -> Implementação de um "Service"
+- Usecases | Fluxos -> Abstração que integra as assinaturas dos "Services" em um fluxo e define a inversão de dependencia para a injeção dos "Adapters"
+- Groups | Controllers ->  Abstração que integra e realiza a injeção de dependencia nos "Usecases" 
+- Entrypoints -> Abstração responsavel por definir os gatilhos de ativação dos "Controllers"
 
-Um fluxo sem inversão de dependencia possui funcionalidades com implementações estaticas ou seja para que o fluxo funcione a implementação é uma dependencia.
-Para um fluxo com inversão de dependencia, a dependencia para de ser a implementação expecifica de uma funcionalidade e passa a se tornar a implementação de alguma funcionalidade que siga os requesitos de uma assinatura especificada.
-Ou seja toda implementação é uma dependencia, o design de codigo do fluxo que vai indicar se ela é uma dependencia exclusiva e obrigatoria do fluxo ou uma dependencia dinamica que pode ser injetada no fluxo.
-De um jeito ou de outro implementações são dependencia e ponto final.
+## Oque é a arquitetura Hexagonal? 
 
-Um sistema que possui um nucleo sem dependencias é um modelo de desenvolvimento onde seu design possui apenas: estruturas de dados, interfaces e fluxos, estes fluxos desenvolvidos com o principio de inversão de dependencia, não possuem uma dependencia interna, ao invés disso recebem como entrada instancias de interfaces e estas sim possuem dependencias.
+A arquitetura hexagonal é uma arquitetura orientada a dominio ou seja é uma arquitetura onde toda a regra de negocio e designs de codigo: 
+- Usecases (Fluxos)
+- Controllers (Grupo de fluxos)
+- Dataclasses ou DTOs (Interface/Assinaturas de estruturas de dados)
+- Services (Interface/Assinaturas de metodos)
+são isoladas com tecnicas de modularização dentro de um nucleo chamado "domain" que não possui dependencias.
 
-Na infraestrutura por outro lado recebemos apenas e unicamente dependencias, ou seja dentro da infrastructura colocamos, migrations, databases, configurações de chamadas de APIs externas, configurações de filas e principalmente acima de tudo: adaptadores de interfaces.
+## Mas, oque são dependencias?
+- Dependencia é toda relação obrigatoria indispensavel entre dois processos no qual um deles não consegue realizar sua funcionalidade sem a existecia do outro.
 
-Em um fluxo seus processos internos podem ser categorizados baseados em seu comportamento:
+- Podemos abstrair o conceito de dependencia para afirmar que por exemplo: um script que cria uma conexão com um banco de dados usando um framework de ORM, possui uma dependencia direta com o framework de ORM ultilizado portanto, se este framework estiver internamente retornando um erro o script em questão para de funcionar. 
 
-- Provider: 
-	Processo que controla dependencias para realizar seu comportamento
+## Inversão de dependencia
+- Todo fluxo que não possui como dependencia a sua implementação de forma estatica, mas sim que recebe sua implementação de forma dinamica como parametro possui oque chamamos de inversão de dependencia
 
-- Factory: 
-	Processo que tem como objetivo gerar um provider ou uma model
+- Um fluxo sem inversão de dependencia possui a implementação de suas funcionalidades de forma estatica tornando sua implementação uma dependencia estatica obrigatoriamente ligada ao fluxo  
 
-- Repository: 
-	Processo de injeção de parametros em outros processos de forma dinamica, onde cada instancia de um mesmo repository injeta parametros diferentes para lidar com processos no qual não apenas os types de seus parametros são dependencias, mas a informação contida desses parametros também. 
+- Ou seja toda implementação é uma dependencia, o design de software ultilizado para criar o fluxo que ira indicar se a implementação sera uma dependencia estatica e obrigatoria do fluxo ou uma dependencia dinamica que pode ser injetada dinamicamente como parametro do fluxo.
 
-	-- Exemplo: Instancias de processos providers de bancos de dados não devem receber apenas uma String como parametro para executar uma query e sim uma String com codigo SQL.
 
-	-- PS: Os repositories recebem como parametro uma instancia de interface.
+## Dependencias da arquitetura de dominio
+- As dependencias de uma arquitetura hexagonal são contidas por meio de tecnicas de modularização nos "entrypoints" e na "infrastructure"
 
-- Bridges: 
-	Processo que possui fluxo de HashMap interno para retorno de instancia de interfaces e dataclasses
+- No caso da criação de gatilhos que iniciam fluxos no sistema como frameworks de RestAPIs que definem rotas de inicialização dos fluxos, frameworks que mapeam um sensores de arduino e inicializam um fluxo ou qualquer outra ferramenta que possa servir como um gatilho de inicialização de um fluxo do programa englobamos nos "entrypoints" 
+
+- Qualquer implementação que possa ser injetada por meio da injeção de dependencia dentro de um fluxo que ultilize a inversão de dependencia englobamos nos "adapters"
+
+
+## Categorias de Adapters
+- Dependendo da responsabilidade e particularidades de cada adapter, eles pertencem a categorias diferentes 
+
+- Provider: Adapter responsavel por manipular alguma ferramenta não nativa da linguagem
+
+- Factory: Adapter responsavel por gerar ou configurar um adapter provider ou uma instancia de uma dataclass 
+
+- Repository: É o adapter que tem como responsabilidade executar o metodo de um adapter provider injetando como entrada deste, parametros estaticos diferentes. Isso é necessario pois existem providers que além de possuir sua implementação como dependencia, possui uma lista estatica e limitada de possiveis parametros de entrada para que algum processo expecifico funcione corretamente        
+
+	- Exemplo: Providers que executam querys no bancos de dados não podem receber apenas uma String qualquer como parametro, suas possiveis entradas são limitadas a receber apenas strings com codigo SQL. Sendo assim podemos ter um repository referente a tabela usuario do banco de dados que possui o metodo "get_user_by_email" e receber como parametro uma string referente a um "email" e o adapter provider que realiza querys dentro do banco de dados  
+
+- Bridges: Adapter que tem como responsabilidade, assim como uma factory retornar um adapter ou instancias de dataclass, mas que diferente da factory dependendo do valor de entrada da bridge, retorna valores diferentes. Ou seja a bridge faz a troca direta de um parametro de entrada (geralmente string) por um outro adapter ou instancia de dataclass
 	
-	-- Exemplo: Ferramentas de injeção de dependencia costuma funcionar através de bridges
+	- Exemplo: Adapters de injeção de dependencia que convertem "strings" correspondentes a um adapter por uma instancia do adapter são Bridges
 
-Interfaces -> Serviços (Services)
-instancias de interfaces -> adaptadores (Adapters)
-Dataclasses ou estruturas de dados -> Modelos (Models)
-Fluxos -> Casos de uso (Usecases)
-Grupos de fluxos -> Controladores (Controllers)
-Pontos de entrada http -> Rotas (Routes)
